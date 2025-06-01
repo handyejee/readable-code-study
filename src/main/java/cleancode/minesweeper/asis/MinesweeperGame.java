@@ -26,20 +26,26 @@ public class MinesweeperGame {
         initializeGame();
 
         while (true) {
-            showBoard();
+            try{
+                showBoard();
 
-            if (doesUserWinTheGame()) {
-                System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
-                break;
-            }
-            if (doesUserLoseTheGame()) {
-                System.out.println("지뢰를 밟았습니다. GAME OVER!");
-                break;
-            }
+                if (doesUserWinTheGame()) {
+                    System.out.println("지뢰를 모두 찾았습니다. GAME CLEAR!");
+                    break;
+                }
+                if (doesUserLoseTheGame()) {
+                    System.out.println("지뢰를 밟았습니다. GAME OVER!");
+                    break;
+                }
 
-            String cellInput = getCellInputFromUser();
-            String userActionInput = getUserActionInputFromUser();
-            actOnCell(cellInput, userActionInput);
+                String cellInput = getCellInputFromUser();
+                String userActionInput = getUserActionInputFromUser();
+                actOnCell(cellInput, userActionInput);
+            } catch (AppException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("프로그램에 문제가 생겼습니다");
+            }
         }
     }
 
@@ -63,8 +69,7 @@ public class MinesweeperGame {
             checkIfGameIsOver();
             return;
         }
-
-        System.out.println("잘못된 번호를 선택하셨습니다.");
+        throw new AppException("잘못된 번호를 선택하셨습니다.");
     }
 
     private static void changeGameStatusToLose() {
@@ -131,7 +136,12 @@ public class MinesweeperGame {
     }
 
     private static int convertRowFrom(char cellInputRow) {
-        return Character.getNumericValue(cellInputRow ) - 1;
+        int rowIndex = Character.getNumericValue(cellInputRow ) - 1;
+        if (rowIndex >= BOARD_ROW_SIZE) {
+            throw new AppException("잘못된 입력입니다.");
+        }
+
+        return rowIndex;
     }
 
     private static int convertColFrom(char cellInputCol) {
@@ -158,7 +168,7 @@ public class MinesweeperGame {
             case 'j':
                 return 9;
             default:
-                return -1;
+                throw new AppException("잘못된 입력입니다.");
         }
     }
 
@@ -189,39 +199,44 @@ public class MinesweeperGame {
 
         for (int row = 0; row < 8; row++) {
             for (int column = 0; column < 10; column++) {
-                int count = 0;
-                if (!isLandMindCell(row, column)) {
-                    if (row - 1 >= 0 && column - 1 >= 0 && isLandMindCell(row - 1,
-                            column - 1)) { // 현재 칸 기준으로 왼쪽 대각선에 있으면
-                        count++;
-                    }
-                    if (row - 1 >= 0 && isLandMindCell(row - 1, column)) {
-                        count++;
-                    }
-                    if (row - 1 >= 0 && column + 1 < 10 && isLandMindCell(row - 1, column + 1)) {
-                        count++;
-                    }
-                    if (column - 1 >= 0 && isLandMindCell(row, column - 1)) {
-                        count++;
-                    }
-                    if (column + 1 < 10 && isLandMindCell(row, column + 1)) {
-                        count++;
-                    }
-                    if (row + 1 < 8 && column - 1 >= 0 && isLandMindCell(row + 1, column - 1)) {
-                        count++;
-                    }
-                    if (row + 1 < 8 && isLandMindCell(row + 1, column)) {
-                        count++;
-                    }
-                    if (row + 1 < 8 && column + 1 < 10 && isLandMindCell(row + 1, column + 1)) {
-                        count++;
-                    }
-                    NEARBY_LAND_MINE_COUNTS[row][column] = count;
+                if (isLandMindCell(row, column)) { // 지뢰 cell이 아니면 count를 해서 할당
+                    NEARBY_LAND_MINE_COUNTS[row][column] = 0;
                     continue;
                 }
-                NEARBY_LAND_MINE_COUNTS[row][column] = 0;
+                int count = countNearByLandMines(row, column);
+                NEARBY_LAND_MINE_COUNTS[row][column] = count;
             }
         }
+    }
+
+    private static int countNearByLandMines(int row, int column) {
+        int count = 0;
+        if (row - 1 >= 0 && column - 1 >= 0 && isLandMindCell(row - 1,
+                column - 1)) { // 현재 칸 기준으로 왼쪽 대각선에 있으면
+            count++;
+        }
+        if (row - 1 >= 0 && isLandMindCell(row - 1, column)) {
+            count++;
+        }
+        if (row - 1 >= 0 && column + 1 < 10 && isLandMindCell(row - 1, column + 1)) {
+            count++;
+        }
+        if (column - 1 >= 0 && isLandMindCell(row, column - 1)) {
+            count++;
+        }
+        if (column + 1 < 10 && isLandMindCell(row, column + 1)) {
+            count++;
+        }
+        if (row + 1 < 8 && column - 1 >= 0 && isLandMindCell(row + 1, column - 1)) {
+            count++;
+        }
+        if (row + 1 < 8 && isLandMindCell(row + 1, column)) {
+            count++;
+        }
+        if (row + 1 < 8 && column + 1 < 10 && isLandMindCell(row + 1, column + 1)) {
+            count++;
+        }
+        return count;
     }
 
     private static void showGameStartComments() {
