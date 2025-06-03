@@ -1,7 +1,7 @@
 package cleancode.minesweeper.asis.io;
 
+import cleancode.minesweeper.asis.GameBoard;
 import cleancode.minesweeper.asis.GameException;
-import cleancode.minesweeper.asis.Cell;
 
 public class ConsoleOutputHandler {
 
@@ -11,12 +11,12 @@ public class ConsoleOutputHandler {
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     }
 
-    public void showBoard(Cell[][] board) {
+    public void showBoard(GameBoard board) {
         System.out.println("   a b c d e f g h i j");
-        for (int row = 0; row < board.length; row++) {
+        for (int row = 0; row < board.getRowSize(); row++) {
             System.out.printf("%d  ", row + 1);
-            for (int col = 0; col < board.length; col++) {
-                System.out.print(board[row][col].getSign() + " ");
+            for (int col = 0; col < board.getColSize(); col++) {
+                System.out.print(board.getSign(row,col) + " ");
             }
             System.out.println();
         }

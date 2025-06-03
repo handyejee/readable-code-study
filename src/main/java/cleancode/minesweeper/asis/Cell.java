@@ -8,7 +8,6 @@ public class Cell {
     public static final String UNCHECKED_SIGN = "□";
     public static final String EMPTY_SIGN = "■";
 
-
     private int nearbyLandMineCount;
     private boolean isLandMine;
     private boolean isFlagged;

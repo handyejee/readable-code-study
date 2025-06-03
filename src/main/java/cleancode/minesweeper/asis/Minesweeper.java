@@ -3,28 +3,23 @@ package cleancode.minesweeper.asis;
 import cleancode.minesweeper.asis.io.ConsoleInputHandler;
 import cleancode.minesweeper.asis.io.ConsoleOutputHandler;
 
-import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
-
 public class Minesweeper {
 
     public static final int BOARD_ROW_SIZE = 8;
     public static final int BOARD_COL_SIZE = 10;
-    public static final Scanner SCANNER = new Scanner(System.in);
-    private static final Cell[][] BOARD = new Cell[BOARD_ROW_SIZE][BOARD_COL_SIZE];
-    public static final int LAND_MINE_COUNT = 10;
 
+    private final GameBoard gameBoard = new GameBoard(BOARD_ROW_SIZE, BOARD_COL_SIZE);
     private final ConsoleInputHandler consoleInputHandler = new ConsoleInputHandler();
     private final ConsoleOutputHandler consoleOutputHandler = new ConsoleOutputHandler();
     private static int gameStatus = 0; // 0: 게임 중, 1: 승리, -1: 패배
 
     public void run() {
-        initializeGame();
+        consoleOutputHandler.showGameStartComments();
+        gameBoard.initializeGame();
 
         while (true) {
             try{
-                consoleOutputHandler.showBoard(BOARD);
+                consoleOutputHandler.showBoard(gameBoard);
 
                 if (doesUserWinTheGame()) {
                     consoleOutputHandler.printGameWinningComment();
@@ -51,19 +46,19 @@ public class Minesweeper {
         int selectedRowIndex = getSelectedRowIndex(cellInput);
 
         if (doesUserChooseToPlantFlag(userActionInput)) {
-            BOARD[selectedRowIndex][selectedColIndex].flag();
+            gameBoard.flag(selectedRowIndex, selectedColIndex);
             checkIfGameIsOver();
             return;
         }
 
         if (doesUserChooseToOpenCell(userActionInput)) {
-            if (isLandMindCell(selectedRowIndex, selectedColIndex)) {
-                BOARD[selectedRowIndex][selectedColIndex].open();
+            if (gameBoard.isLandMineCell(selectedRowIndex, selectedColIndex)) {
+                gameBoard.open(selectedRowIndex, selectedColIndex);
                 changeGameStatusToLose();
                 return;
             }
 
-            open(selectedRowIndex, selectedColIndex);
+            gameBoard.openSurroundedCells(selectedRowIndex, selectedColIndex);
             checkIfGameIsOver();
             return;
         }
@@ -72,10 +67,6 @@ public class Minesweeper {
 
     private void changeGameStatusToLose() {
         gameStatus = -1;
-    }
-
-    private boolean isLandMindCell(int selectedRowIndex, int selectedColIndex) {
-        return BOARD[selectedRowIndex][selectedColIndex].isLandMine();
     }
 
     private boolean doesUserChooseToOpenCell(String userActionInput) {
@@ -88,19 +79,17 @@ public class Minesweeper {
 
     private int getSelectedRowIndex(String input) {
         char cellInputRow = input.charAt(1);
-        int selectedRowIndex = convertRowFrom(cellInputRow);
-        return selectedRowIndex;
+        return convertRowFrom(cellInputRow);
     }
 
     private int getSelectedColIndex(String input) {
         char cellInputCol = input.charAt(0);
-        int selectedColIndex = convertColFrom(cellInputCol); // 메서드 시그니처를 전치사로 자연스럽게 연결(from)
-        return selectedColIndex;
+        return convertColFrom(cellInputCol);
     }
 
     private String getUserActionInputFromUser() {
         consoleOutputHandler.printCommentForUserAction();
-        return SCANNER.nextLine();
+        return consoleInputHandler.getUserInput();
     }
 
     private String getCellInputFromUser() {
@@ -117,21 +106,13 @@ public class Minesweeper {
     }
 
     private void checkIfGameIsOver() {
-        boolean isAllChecked = isAllCellChecked();
-        if (isAllChecked) {
+        if (gameBoard.isAllCellChecked()) {
             changeGameStatusToWin();
         }
     }
 
     private void changeGameStatusToWin() {
         gameStatus = 1;
-    }
-
-    private boolean isAllCellChecked() {
-        return Arrays.stream(BOARD)
-                .flatMap(Arrays::stream)
-//                .noneMatch(cell -> cell.getSign().equals(CLOSED_CELL_SIGN)); // 무례한 예
-                .allMatch(Cell::isChecked);
     }
 
     private int convertRowFrom(char cellInputRow) {
@@ -168,88 +149,5 @@ public class Minesweeper {
             default:
                 throw new GameException("잘못된 입력입니다.");
         }
-    }
-
-    private void initializeGame() {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 10; col++) {
-                BOARD[row][col] = Cell.create();
-            }
-        }
-
-        for (int i = 0; i < LAND_MINE_COUNT; i++) {
-            int col = new Random().nextInt(10);
-            int row = new Random().nextInt(8);
-            BOARD[row][col].turnOnLandMine();
-        }
-
-        for (int row = 0; row < 8; row++) {
-            for (int column = 0; column < 10; column++) {
-                if (isLandMindCell(row, column)) { // 지뢰 cell이 아니면 count를 해서 할당
-                    continue;
-                }
-                int count = countNearByLandMines(row, column);
-                BOARD[row][column].updateNearbyLandMineCount(count);
-            }
-        }
-    }
-
-    private int countNearByLandMines(int row, int column) {
-        int count = 0;
-        if (row - 1 >= 0 && column - 1 >= 0 && isLandMindCell(row - 1,
-                column - 1)) { // 현재 칸 기준으로 왼쪽 대각선에 있으면
-            count++;
-        }
-        if (row - 1 >= 0 && isLandMindCell(row - 1, column)) {
-            count++;
-        }
-        if (row - 1 >= 0 && column + 1 < 10 && isLandMindCell(row - 1, column + 1)) {
-            count++;
-        }
-        if (column - 1 >= 0 && isLandMindCell(row, column - 1)) {
-            count++;
-        }
-        if (column + 1 < 10 && isLandMindCell(row, column + 1)) {
-            count++;
-        }
-        if (row + 1 < 8 && column - 1 >= 0 && isLandMindCell(row + 1, column - 1)) {
-            count++;
-        }
-        if (row + 1 < 8 && isLandMindCell(row + 1, column)) {
-            count++;
-        }
-        if (row + 1 < 8 && column + 1 < 10 && isLandMindCell(row + 1, column + 1)) {
-            count++;
-        }
-        return count;
-    }
-
-    private void open(int row, int col) {
-        if (row < 0 || row >= 8 || col < 0 || col >= 10) { //  경계밖으로 벗어난 경우
-            return;
-        }
-        if (BOARD[row][col].isOpened()) { // 종료조건
-            return;
-        }
-        if (isLandMindCell(row, col)) { // 지뢰셀
-            return;
-        }
-
-        BOARD[row][col].open();
-
-        if (BOARD[row][col].hasLandMineCount()) {
-            BOARD[row][col].open();
-            // BOARD[row][col] = Cell.ofNearbyMineCount(NEARBY_LAND_MINE_COUNTS[row][col]);
-            return;
-        }
-
-        open(row - 1, col - 1);
-        open(row - 1, col);
-        open(row - 1, col + 1);
-        open(row, col - 1);
-        open(row, col + 1);
-        open(row + 1, col - 1);
-        open(row + 1, col);
-        open(row + 1, col + 1);
     }
 }
