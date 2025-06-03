@@ -1,20 +1,25 @@
-package cleancode.minesweeper.asis;
+package cleancode.minesweeper.tobe;
+
+import cleancode.minesweeper.tobe.gamelevel.GameLevel;
 
 import java.util.Arrays;
 import java.util.Random;
 
 public class GameBoard {
 
-    public static final int LAND_MINE_COUNT = 10;
+    private final Cell[][] board;
+    private final int landMineCount;
 
-    private  final Cell[][] board;
-
-    public GameBoard(int rowSize, int colSize) {
+    public GameBoard(GameLevel gameLevel) {
+        int rowSize = gameLevel.getRowSize();
+        int colSize = gameLevel.getColSize();
         board = new Cell[rowSize][colSize];
+
+        landMineCount = gameLevel.getLandMineCount();
     }
 
-    public void flag(int selectedRowIndex, int selectedColIndex) {
-        Cell cell = findCell(selectedRowIndex, selectedColIndex);
+    public void flag(int rowIndex, int colIndex) {
+        Cell cell = findCell(rowIndex, colIndex);
         cell.flag();
     }
 
@@ -24,7 +29,7 @@ public class GameBoard {
     }
 
     public void openSurroundedCells(int row, int col) {
-        if (row < 0 || row >= 8 || col < 0 || col >= 10) { //  경계밖으로 벗어난 경우
+        if (row < 0 || row >= getRowSize() || col < 0 || col >= getColSize()) { //  경계밖으로 벗어난 경우
             return;
         }
         if (isOpenedCell(row, col)) { // 종료조건
@@ -74,15 +79,15 @@ public class GameBoard {
         int colSize = board[0].length;
 
         for (int row = 0; row < rowSize; row++) {
-            for (int col = 0; col < 10; col++) {
+            for (int col = 0; col < colSize; col++) {
                 board[row][col] = Cell.create();
             }
         }
 
-        for (int i = 0; i < LAND_MINE_COUNT; i++) {
+        for (int i = 0; i < landMineCount; i++) {
             int landMineCol = new Random().nextInt(colSize);
             int landMineRow = new Random().nextInt(rowSize);
-            Cell landMineCell = findCell(landMineCol,  landMineRow);
+            Cell landMineCell = findCell(landMineRow, landMineCol);
             landMineCell.turnOnLandMine();
         }
 
@@ -120,14 +125,13 @@ public class GameBoard {
         int colSize = getColSize();
 
         int count = 0;
-        if (row - 1 >= 0 && col - 1 >= 0 && isLandMineCell(row - 1,
-                col - 1)) { // 현재 칸 기준으로 왼쪽 대각선에 있으면
+        if (row - 1 >= 0 && col - 1 >= 0 && isLandMineCell(row - 1, col - 1)) {
             count++;
         }
         if (row - 1 >= 0 && isLandMineCell(row - 1, col)) {
             count++;
         }
-        if (row - 1 >= 0 && col + 1 < 10 && isLandMineCell(row - 1, col + 1)) {
+        if (row - 1 >= 0 && col + 1 < colSize && isLandMineCell(row - 1, col + 1)) {
             count++;
         }
         if (col - 1 >= 0 && isLandMineCell(row, col - 1)) {
@@ -142,7 +146,7 @@ public class GameBoard {
         if (row + 1 < rowSize && isLandMineCell(row + 1, col)) {
             count++;
         }
-        if (row + 1 < rowSize && colSize + 1 < 10 && isLandMineCell(row + 1, col + 1)) {
+        if (row + 1 < rowSize && col + 1 < colSize && isLandMineCell(row + 1, col + 1)) {
             count++;
         }
         return count;

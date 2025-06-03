@@ -1,4 +1,4 @@
-package cleancode.minesweeper.tobe;
+package cleancode.minesweeper.asis;
 
 import java.util.Random;
 import java.util.Scanner;
