@@ -1,19 +1,19 @@
 package cleancode.minesweeper.tobe.cell;
 
-
-public abstract class Cell2 {
-
-    protected static final String FLAG_SIGN = "⚑";
-    protected static final String UNCHECKED_SIGN = "□";
+public class CellState {
 
     protected boolean isFlagged;
     protected boolean isOpened;
 
-    public abstract boolean isLandMine();
+    private CellState(boolean isFlagged, boolean isOpened) {
+        this.isFlagged = isFlagged;
+        this.isOpened = isOpened;
+    }
 
-    public abstract boolean hasLandMineCount();
-
-    public abstract String getSign();
+    // cell이 처음 생성되면 열려있지 않고 깃발이 꽂혀있지 않아서
+    public static CellState initialize() {
+        return new CellState(false, false);
+    }
 
     public void flag() {
         this.isFlagged = true;
@@ -30,4 +30,4 @@ public abstract class Cell2 {
     public boolean isOpened() {
         return isOpened;
     }
-}
+ }
